@@ -1,0 +1,5 @@
+template/*
+*.obj
+*.exe
+*.ilk
+*.pdb
