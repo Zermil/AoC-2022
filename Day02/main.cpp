@@ -70,13 +70,15 @@ internal std::vector<Move> get_data(const char *filename)
     size_t size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char *buff = (char *) malloc(size);
+    char *buff = (char *) malloc(size + 1);
     fread(buff, 1, size, file);
     fclose(file);
     
+    buff[size] = '\0';
+    
     String slurped = {
         buff,
-        strlen(buff)
+        size
     };
 
     std::vector<Move> data;
