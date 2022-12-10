@@ -64,15 +64,14 @@ internal int find_index(const String *str, const char c)
     return(-1);
 }
 
-internal String get_substring(const String *str, int start, int end)
+internal String substring(const String *str, size_t start, size_t end)
 {
-    assert(start >= 0 && start <= str->count);
-    assert(end >= 0 && end <= str->count);
+    assert(start < str->count && end < str->count);
     assert(end >= start);
-    
+        
     String substr = {};
     substr.data = str->data + start;
-    substr.count = end - start;
+    substr.count = end - start + 1;
     
     return(substr);
 }
@@ -90,8 +89,8 @@ internal int string_to_int(const String *str)
 internal Range get_range_values(const String *range)
 {
     int numbers_split = find_index(range, '-');
-    String start = get_substring(range, 0, numbers_split);
-    String end = get_substring(range, numbers_split + 1, static_cast<int> (range->count));
+    String start = substring(range, 0, static_cast<size_t> (numbers_split - 1));
+    String end = substring(range, numbers_split + 1, range->count - 1);
 
     Range values = {};
     values.start = string_to_int(&start);
@@ -103,8 +102,8 @@ internal Range get_range_values(const String *range)
 internal Range_Pair get_range_pairs(const String *line)
 {
     int range_split = find_index(line, ',');
-    String r1 = get_substring(line, 0, range_split);
-    String r2 = get_substring(line, range_split + 1, static_cast<int> (line->count));
+    String r1 = substring(line, 0, static_cast<size_t> (range_split - 1));
+    String r2 = substring(line, range_split + 1, line->count - 1);
 
     Range first = get_range_values(&r1);
     Range second = get_range_values(&r2);
