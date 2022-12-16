@@ -3,10 +3,13 @@
 #include <cstring>
 #include <cassert>
 #include <vector>
+#include <algorithm>
 
 #define internal static
 
 #define NODE_CAP 512
+#define FILESYSTEM_SPACE 70000000
+#define UPDATE_SPACE 30000000
 
 struct String
 {
@@ -114,7 +117,7 @@ internal unsigned int string_to_int(const String *str)
     return(num);
 }
 
-internal Node* arena_get(Arena *memory_arena)
+internal Node *arena_get(Arena *memory_arena)
 {
     assert(memory_arena->count < NODE_CAP);
     return(&memory_arena->pool[memory_arena->count++]); 
@@ -199,7 +202,7 @@ internal void parse_input(String *slurped, Arena *arena)
     }
 }
 
-internal const char* get_file_contents(const char *filename)
+internal const char *get_file_contents(const char *filename)
 {
     FILE *file = fopen(filename, "rb");
 
@@ -221,36 +224,68 @@ internal const char* get_file_contents(const char *filename)
     return(buff);
 }
 
+internal void calculate_directory_size(Node *node)
+{
+    for (Node *file : node->content) {
+        if (file->type == BINARY) {
+            node->size += file->size;
+        } else {
+            calculate_directory_size(file);
+            node->size += file->size;
+        }
+    }
+}
+
+internal void part_1(const Arena *arena)
+{
+    unsigned int ans = 0;
+    
+    for (size_t i = 0; i < arena->count; ++i) {
+        const Node &node = arena->pool[i];
+        if (node.type == BINARY) continue;
+        
+        if (node.size <= 100000) {
+            ans += node.size;
+        }
+    }
+
+    printf("Answer part 1: %u\n", ans);
+}
+
+internal void part_2(const Arena *arena)
+{
+    unsigned int unused_space = FILESYSTEM_SPACE - arena->pool[0].size;
+    std::vector<unsigned int> directories = {};
+    
+    for (size_t i = 0; i < arena->count; ++i) {
+        const Node &node = arena->pool[i];
+        if (node.type == BINARY) continue;
+
+        unsigned int space_after_delete = unused_space + arena->pool[i].size;
+        
+        if (space_after_delete >= UPDATE_SPACE) {
+            directories.emplace_back(arena->pool[i].size);
+        }
+    }
+
+    std::sort(directories.begin(), directories.end());
+    printf("Answer part 2: %u\n", directories[0]);
+}
+
 int main()
 {
-    const char *file_contents = get_file_contents("sample.txt");
-    
-    String slurped = {};
-    slurped.data = file_contents;
-    slurped.count = strlen(file_contents);
+    const char *file_contents = get_file_contents("input.txt");
+    String slurped = string(file_contents);
     
     Arena arena = {};
     arena.pool = (Node *) malloc(NODE_CAP * sizeof(Node));
     memset(arena.pool, 0, NODE_CAP * sizeof(Node));
     
     parse_input(&slurped, &arena);
+    calculate_directory_size(&arena.pool[0]);
     
-    for (size_t i = 0; i < arena.count; ++i) {
-        const Node &node = arena.pool[i];
-        if (node.type == BINARY) continue;
-        
-        printf("%.*s -> %d\n", (int) node.name.count, node.name.data, node.size);
-
-        if (node.parent != NULL) {
-            printf("  Parent: %.*s\n", (int) node.parent->name.count, node.parent->name.data);
-        }
-
-        for (size_t j = 0; j < node.content.size(); ++j) {
-            printf("  Content: %.*s -> %u\n",
-                   (int) node.content[j]->name.count, node.content[j]->name.data,
-                   node.content[j]->size);
-        }
-    }
+    part_1(&arena);
+    part_2(&arena);
 
     arena_free(&arena);
     free((void *) file_contents);
