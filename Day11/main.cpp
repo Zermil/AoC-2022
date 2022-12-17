@@ -149,7 +149,7 @@ internal Monkey parse_monkey(const std::vector<String> &lines)
     };
     
     String starting_items = substring(&lines[1], lines_of_interest[0].count, lines[1].count - 1);
-    String operation = substring(&lines[2], lines_of_interest[1].count, lines[2].count - 3);
+    String operation = substring(&lines[2], lines_of_interest[1].count, lines[2].count - 1);
     String test = substring(&lines[3], lines_of_interest[2].count, lines[3].count - 1);
     String if_true = substring(&lines[4], lines_of_interest[3].count, lines[4].count - 1);
     String if_false = substring(&lines[5], lines_of_interest[4].count, lines[5].count - 1);
@@ -181,6 +181,8 @@ internal Monkey parse_monkey(const std::vector<String> &lines)
 
     if (is_character_number(operation.data[2])) {
         operation.data += 2;
+        operation.count -= 2;
+        
         monkey.operation.argument = string_to_int(&operation);
     } else {
         monkey.operation.kind = SQR;
